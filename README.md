@@ -21,7 +21,7 @@ Also included:
 - Keeps the screen awake during a session, in browsers that support the Screen Wake Lock API
 - Big tap targets for one-handed phone use, plus keyboard control: Space starts, pauses, resumes and ends a hold, and P pauses
 - No pulsing for people who set their device to reduce motion
-- Light and dark color schemes
+- Stays in Liquid Breathwork navy whether your device is set to light or dark mode
 
 ## How to use it
 
