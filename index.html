@@ -398,7 +398,7 @@
         <button type="button" class="ghost" id="pause" hidden>Pause</button>
         <button type="button" class="ghost" id="stop">End session</button>
       </div>
-      <p class="keys"><kbd>Space</kbd> pause, resume or end a hold &middot; <kbd>P</kbd> pause</p>
+      <p class="keys"><span id="keysPaced"><kbd>Space</kbd> pauses, resumes or ends a hold. <kbd>P</kbd> pauses.</span><span id="keysSelf" hidden><kbd>Space</kbd> starts the hold, then ends it. <kbd>P</kbd> pauses.</span></p>
     </div>
 
     <!-- Results -->
@@ -460,6 +460,7 @@
     paced: $('paced'), sound: $('sound'), paceField: $('paceField'), paceHint: $('paceHint'),
     resultsTitle: $('resultsTitle'), resultList: $('resultList'), resultNote: $('resultNote'),
     again: $('again'), edit: $('edit'), live: $('live'),
+    keysPaced: $('keysPaced'), keysSelf: $('keysSelf'),
     historyList: $('historyList'), historyEmpty: $('historyEmpty'), historyNote: $('historyNote'),
     clearHistory: $('clearHistory')
   };
@@ -839,6 +840,9 @@
     if (prefs.sound) ensureAudio();
     timer = Core.createTimer(prefs);
     lastPhaseAt = -Infinity;
+    // With steady pace off the main button starts the hold, and so does Space.
+    el.keysPaced.hidden = !timer.settings.paced;
+    el.keysSelf.hidden = timer.settings.paced;
     showMode('run');
     var now = performance.now();
     handleEvents(timer.start(now));

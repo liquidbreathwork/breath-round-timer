@@ -19,7 +19,7 @@ Also included:
 - History of past sessions, kept only in your browser (localStorage), with a Clear history button
 - Optional soft tones at each phase change, generated in the browser and off by default
 - Keeps the screen awake during a session, in browsers that support the Screen Wake Lock API
-- Big tap targets for one-handed phone use, plus keyboard control: Space starts, pauses, resumes and ends a hold, and P pauses
+- Big tap targets for one-handed phone use, plus keyboard control: Space starts a session, pauses, resumes and ends a hold, and P pauses. With steady pace off, Space starts the hold, then ends it.
 - No pulsing for people who set their device to reduce motion
 - Stays in Liquid Breathwork navy whether your device is set to light or dark mode
 
