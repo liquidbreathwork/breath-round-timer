@@ -1,0 +1,10 @@
+{
+  "name": "breath-round-timer",
+  "version": "1.0.0",
+  "description": "A Breathwork round and hold timer that runs in the browser. No accounts, no tracking.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/"
+  }
+}
