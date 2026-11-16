@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Breathwork Round and Hold Timer</title>
+<meta name="description" content="Time your Breathwork rounds and breath holds. Set your rounds, breathe, and we keep the count. Free, private, and it runs in your browser.">
+<link rel="canonical" href="{{PAGES_URL}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Breathwork Round and Hold Timer">
+<meta property="og:description" content="Time your Breathwork rounds and breath holds. Set your rounds, breathe, and we keep the count.">
+<meta property="og:url" content="{{PAGES_URL}}">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f0e8" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1628'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23c9a96e' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23f5f0e8'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: dark;
+    --navy: #0a1628;
+    --deep: #0d1b3e;
+    --cream: #f5f0e8;
+    --gold: #c9a96e;
+    --sand: #e8dcc8;
+
+    --bg: var(--navy);
+    --surface: var(--deep);
+    --text: var(--cream);
+    --muted: var(--sand);
+    --accent: var(--gold);
+    --btn-bg: var(--gold);
+    --btn-text: var(--navy);
+    --line: rgba(201, 169, 110, 0.3);
+    --line-strong: rgba(201, 169, 110, 0.6);
+    --field: rgba(245, 240, 232, 0.06);
+    --orb-core: rgba(13, 27, 62, 0);
+    --orb-edge: rgba(201, 169, 110, 0.3);
+    --orb-glow: rgba(201, 169, 110, 0.16);
+    --orb-ring: var(--gold);
+    --focus: var(--gold);
+    --radius: 20px;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+      --bg: var(--cream);
+      --surface: var(--sand);
+      --text: var(--navy);
+      --muted: #2b3a57;
+      --accent: #6e5120;
+      --btn-bg: var(--navy);
+      --btn-text: var(--cream);
+      --line: rgba(10, 22, 40, 0.2);
+      --line-strong: rgba(10, 22, 40, 0.45);
+      --field: rgba(245, 240, 232, 0.85);
+      --orb-core: rgba(245, 240, 232, 0);
+      --orb-edge: rgba(201, 169, 110, 0.45);
+      --orb-glow: rgba(201, 169, 110, 0.28);
+      --orb-ring: #a8864a;
+      --focus: var(--navy);
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main, footer {
+    width: 100%;
+    max-width: 36rem;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+
+  :focus { outline: none; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+  button, input { font: inherit; color: inherit; }
+  button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+  button:disabled { cursor: default; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* ---------- Header ---------- */
+  .intro { text-align: center; padding: 32px 0 20px; }
+  .intro h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.75rem, 7vw, 2.5rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    font-weight: 650;
+    text-wrap: balance;
+  }
+  .intro p {
+    margin: 0 auto;
+    max-width: 30rem;
+    color: var(--muted);
+    text-wrap: balance;
+  }
+
+  /* ---------- Tool card ---------- */
+  .tool {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .field:first-child { padding-top: 0; }
+  .field-text { min-width: 0; }
+  .field-text label, .field-text .label { display: block; font-weight: 600; }
+  .field-text .hint { display: block; font-size: 0.875rem; color: var(--muted); text-wrap: pretty; }
+
+  .stepper { display: flex; align-items: center; gap: 6px; flex: none; }
+  .step {
+    width: 48px; height: 48px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    padding: 0;
+  }
+  .step svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; fill: none; }
+  .step:disabled { opacity: 0.35; }
+  .stepper input {
+    width: 4.25rem; height: 48px;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0 4px;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper input:disabled { opacity: 0.45; }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    min-height: 48px; cursor: pointer;
+  }
+  .toggle input {
+    width: 26px; height: 26px; margin: 0 11px 0 0; flex: none;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
+  .field.is-toggle { padding: 4px 0; }
+  .field.is-toggle .toggle { width: 100%; }
+
+  .safety {
+    margin: 18px 0;
+    padding: 12px 14px;
+    border-left: 3px solid var(--gold);
+    background: var(--field);
+    border-radius: 0 12px 12px 0;
+    font-size: 0.9375rem;
+    color: var(--muted);
+  }
+  .safety strong { color: var(--text); }
+
+  .primary {
+    display: block;
+    width: 100%;
+    min-height: 64px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    font-size: 1.25rem;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+    padding: 12px 20px;
+  }
+  .primary:active { transform: translateY(1px); }
+
+  .ghost {
+    min-height: 48px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    padding: 10px 18px;
+    font-weight: 600;
+  }
+
+  /* ---------- Running view ---------- */
+  .run { text-align: center; }
+  .meta {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .phase-name { margin: 2px 0 0; font-size: 1.5rem; font-weight: 650; }
+
+  .stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(100%, 300px);
+    aspect-ratio: 1 / 1;
+    margin: 12px auto;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+  }
+  .stage:disabled { cursor: default; }
+  .orb {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--orb-ring);
+    background: radial-gradient(circle, var(--orb-core) 48%, var(--orb-edge) 100%);
+    box-shadow: 0 0 48px var(--orb-glow);
+    transform: scale(1);
+    transition: transform 0.9s ease;
+    will-change: transform;
+  }
+  .app[data-phase="breathe"][data-paced="true"] .orb { transition: none; }
+  .readout { position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+  .big {
+    font-size: clamp(3.25rem, 17vw, 5.5rem);
+    font-weight: 650;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .app[data-phase="hold"] .big { font-size: clamp(2.75rem, 14vw, 4.5rem); }
+  .sub { margin-top: 6px; font-size: 1rem; color: var(--muted); }
+
+  .cue { margin: 4px 0 16px; min-height: 3em; font-size: 1.125rem; text-wrap: balance; }
+
+  .row { display: flex; gap: 10px; margin-top: 12px; }
+  .row .ghost { flex: 1 1 0; min-width: 0; }
+
+  .keys { display: none; margin: 14px 0 0; font-size: 0.875rem; color: var(--muted); text-wrap: balance; }
+  @media (hover: hover) and (pointer: fine) { .keys { display: block; } }
+  kbd {
+    font-family: inherit; font-size: 0.8125rem; font-weight: 600;
+    border: 1px solid var(--line-strong); border-radius: 6px; padding: 1px 6px;
+  }
+
+  /* ---------- Results ---------- */
+  .results h2 { margin: 0 0 12px; font-size: 1.375rem; }
+  /* The heading takes focus from script so screen readers land on the results; no ring needed. */
+  .results h2:focus { outline: none; }
+  .result-list { list-style: none; margin: 0 0 12px; padding: 0; }
+  .result-list li {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--line);
+    font-variant-numeric: tabular-nums; font-size: 1.125rem;
+  }
+  .result-list .t { font-weight: 650; }
+  .note { margin: 0 0 16px; color: var(--muted); }
+  .results .ghost { width: 100%; margin-top: 10px; }
+
+  /* ---------- Sections below the tool ---------- */
+  .section { padding: 28px 0 0; }
+  .section h2 { margin: 0 0 10px; font-size: 1.25rem; }
+  .how ol { margin: 0; padding-left: 1.4em; }
+  .how li { margin: 0 0 8px; text-wrap: pretty; }
+  .how li::marker { color: var(--accent); font-weight: 650; }
+  .small { font-size: 0.9375rem; color: var(--muted); margin: 0 0 10px; text-wrap: pretty; }
+
+  .history-list { list-style: none; margin: 0 0 12px; padding: 0; }
+  .history-list li {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--line);
+  }
+  .history-list .when { color: var(--muted); font-size: 0.9375rem; }
+  .history-list .holds { font-variant-numeric: tabular-nums; font-weight: 600; overflow-wrap: anywhere; }
+
+  footer {
+    padding-top: 36px;
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+    text-align: center;
+    font-size: 0.9375rem;
+    color: var(--muted);
+  }
+  footer p { margin: 0 0 8px; text-wrap: balance; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb { transition: none; transform: none !important; }
+    .primary:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="intro">
+    <h1>Breathwork Round and Hold Timer</h1>
+    <p>Time your Breathwork rounds and breath holds. Set your rounds, breathe, and we keep the count.</p>
+  </header>
+
+  <section class="tool app" id="app" aria-label="Timer" data-phase="idle">
+    <noscript><p>This timer needs JavaScript turned on.</p></noscript>
+
+    <!-- Settings -->
+    <div id="setup">
+      <div class="field">
+        <div class="field-text"><label for="rounds">Rounds</label></div>
+        <div class="stepper">
+          <button type="button" class="step" data-target="rounds" data-dir="-1" aria-label="Fewer rounds"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <input id="rounds" type="number" inputmode="numeric" min="1" max="20" step="1" value="3">
+          <button type="button" class="step" data-target="rounds" data-dir="1" aria-label="More rounds"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-text">
+          <label for="breaths">Breaths</label>
+          <span class="hint">per round</span>
+        </div>
+        <div class="stepper">
+          <button type="button" class="step" data-target="breaths" data-dir="-1" aria-label="Fewer breaths"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <input id="breaths" type="number" inputmode="numeric" min="1" max="100" step="1" value="30">
+          <button type="button" class="step" data-target="breaths" data-dir="1" aria-label="More breaths"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-text">
+          <label for="recoverySeconds">Recovery hold</label>
+          <span class="hint">seconds</span>
+        </div>
+        <div class="stepper">
+          <button type="button" class="step" data-target="recoverySeconds" data-dir="-1" aria-label="Shorter recovery hold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <input id="recoverySeconds" type="number" inputmode="numeric" min="0" max="120" step="1" value="15">
+          <button type="button" class="step" data-target="recoverySeconds" data-dir="1" aria-label="Longer recovery hold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+        </div>
+      </div>
+
+      <div class="field is-toggle">
+        <label class="toggle">
+          <span class="field-text">
+            <span class="label">Steady pace</span>
+            <span class="hint" id="paceHint">The circle sets the pace.</span>
+          </span>
+          <input id="paced" type="checkbox" checked>
+        </label>
+      </div>
+
+      <div class="field" id="paceField">
+        <div class="field-text">
+          <label for="paceSeconds">Pace</label>
+          <span class="hint">seconds per breath</span>
+        </div>
+        <div class="stepper">
+          <button type="button" class="step" data-target="paceSeconds" data-dir="-1" aria-label="Faster pace"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <input id="paceSeconds" type="number" inputmode="decimal" min="1" max="10" step="0.5" value="2">
+          <button type="button" class="step" data-target="paceSeconds" data-dir="1" aria-label="Slower pace"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+        </div>
+      </div>
+
+      <div class="field is-toggle">
+        <label class="toggle">
+          <span class="field-text">
+            <span class="label">Soft sound cues</span>
+            <span class="hint">A short tone when the phase changes.</span>
+          </span>
+          <input id="sound" type="checkbox">
+        </label>
+      </div>
+
+      <p class="safety"><strong>Safety:</strong> Sit or lie down somewhere safe. Do not practice strong breath holds while driving, in water, standing, or anywhere fainting would be dangerous. Chest pressure, dizziness, or sharp air hunger means stop and breathe normally.</p>
+
+      <button type="button" class="primary" id="start">Start</button>
+    </div>
+
+    <!-- Running -->
+    <div id="run" class="run" hidden>
+      <p class="meta" id="roundLabel">Round 1 of 3</p>
+      <p class="phase-name" id="phaseName">Breathe</p>
+      <button type="button" class="stage" id="stage" disabled aria-label="Timer display">
+        <span class="orb" id="orb" aria-hidden="true"></span>
+        <span class="readout">
+          <span class="big" id="bigNumber">1</span>
+          <span class="sub" id="subNumber">of 30</span>
+        </span>
+      </button>
+      <p class="cue" id="cue">Breathe in fully</p>
+      <button type="button" class="primary" id="primary">Pause</button>
+      <div class="row">
+        <button type="button" class="ghost" id="holdNow">Start hold</button>
+        <button type="button" class="ghost" id="stop">End session</button>
+      </div>
+      <p class="keys"><kbd>Space</kbd> pause, resume or end a hold &middot; <kbd>P</kbd> pause</p>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results" hidden>
+      <h2 id="resultsTitle" tabindex="-1">Your hold times</h2>
+      <ol class="result-list" id="resultList"></ol>
+      <p class="note" id="resultNote"></p>
+      <button type="button" class="primary" id="again">Start again</button>
+      <button type="button" class="ghost" id="edit">Change settings</button>
+    </div>
+
+    <div class="sr-only" aria-live="polite" id="live"></div>
+  </section>
+
+  <section class="section how" aria-labelledby="howTitle">
+    <h2 id="howTitle">How to use it</h2>
+    <ol>
+      <li>Set your rounds, breaths per round and recovery hold. Keep steady pace on to follow the circle, or turn it off and tap the circle for each breath.</li>
+      <li>Press Start and breathe with the count. After the last breath, breathe out and hold while the stopwatch runs.</li>
+      <li>When you need to breathe in, tap End hold or press the space bar. Breathe in fully and hold until the countdown ends.</li>
+      <li>The next round starts on its own. At the end we show each hold time and keep it in this browser only.</li>
+    </ol>
+  </section>
+
+  <section class="section history" aria-labelledby="historyTitle">
+    <h2 id="historyTitle">Past sessions</h2>
+    <p class="small" id="historyNote">Kept only in this browser, never sent anywhere.</p>
+    <ol class="history-list" id="historyList"></ol>
+    <p class="small" id="historyEmpty">No sessions yet.</p>
+    <button type="button" class="ghost" id="clearHistory" hidden>Clear history</button>
+  </section>
+</main>
+
+<footer>
+  <p>Made by <a href="https://www.liquidbreathwork.com/" rel="noopener">Liquid Breathwork</a>, a Breathwork practice in Arizona. Learn to guide sessions in our <a href="https://www.liquidbreathwork.com/breathwork-certification/" rel="noopener">Breathwork certification</a>.</p>
+  <p><a href="{{REPO_URL}}" rel="noopener">Source code</a> (MIT license)</p>
+</footer>
+
+<script src="timer-core.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var Core = window.BreathTimerCore;
+  if (!Core) return;
+  var P = Core.PHASE;
+
+  // Taps that land this soon after a phase change are ignored, so a double
+  // tap on End hold does not also pause the recovery.
+  var GUARD_MS = 400;
+  var FIELDS = ['rounds', 'breaths', 'paceSeconds', 'recoverySeconds'];
+
+  function $(id) { return document.getElementById(id); }
+  var el = {
+    app: $('app'), setup: $('setup'), run: $('run'), results: $('results'),
+    start: $('start'), primary: $('primary'), holdNow: $('holdNow'), stop: $('stop'),
+    stage: $('stage'), orb: $('orb'), big: $('bigNumber'), sub: $('subNumber'),
+    cue: $('cue'), roundLabel: $('roundLabel'), phaseName: $('phaseName'),
+    paced: $('paced'), sound: $('sound'), paceField: $('paceField'), paceHint: $('paceHint'),
+    resultsTitle: $('resultsTitle'), resultList: $('resultList'), resultNote: $('resultNote'),
+    again: $('again'), edit: $('edit'), live: $('live'),
+    historyList: $('historyList'), historyEmpty: $('historyEmpty'), historyNote: $('historyNote'),
+    clearHistory: $('clearHistory')
+  };
+
+  // Browser storage can be missing or throw (private windows, blocked data).
+  var storage = null;
+  try {
+    storage = window.localStorage;
+    storage.getItem('breath-round-timer:probe');
+  } catch (e) {
+    storage = null;
+  }
+  var historyStore = Core.createHistoryStore(storage);
+  var prefsStore = Core.createPrefsStore(storage);
+
+  var prefs = prefsStore.load();
+  var timer = null;
+  var mode = 'setup';
+  var lastPhaseAt = -Infinity;
+  var rafId = 0;
+  var intervalId = 0;
+
+  var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function reduceMotion() { return !!(motionQuery && motionQuery.matches); }
+
+  /* ---------- Settings form ---------- */
+
+  function fillForm(p) {
+    FIELDS.forEach(function (k) { $(k).value = String(p[k]); });
+    el.paced.checked = p.paced;
+    el.sound.checked = p.sound;
+    syncPace();
+  }
+
+  function readForm() {
+    var raw = {};
+    FIELDS.forEach(function (k) { raw[k] = $(k).value; });
+    raw.paced = el.paced.checked;
+    var s = Core.normalizeSettings(raw);
+    s.sound = el.sound.checked;
+    return s;
+  }
+
+  function savePrefs() {
+    prefs = readForm();
+    prefsStore.save(prefs);
+  }
+
+  function syncPace() {
+    var on = el.paced.checked;
+    el.paceField.querySelectorAll('input, button').forEach(function (node) { node.disabled = !on; });
+    if (on) {
+      var s = readForm();
+      var perRound = Core.formatDuration(s.breaths * s.paceSeconds * 1000);
+      el.paceHint.textContent = 'The circle sets the pace: about ' + perRound + ' of breathing per round.';
+    } else {
+      el.paceHint.textContent = 'Off: tap the circle for each breath.';
+    }
+    syncSteppers();
+  }
+
+  function syncSteppers() {
+    document.querySelectorAll('.step').forEach(function (btn) {
+      var key = btn.getAttribute('data-target');
+      var lim = Core.LIMITS[key];
+      var input = $(key);
+      if (input.disabled) { btn.disabled = true; return; }
+      var value = Core.clampNumber(input.value, lim);
+      var dir = Number(btn.getAttribute('data-dir'));
+      btn.disabled = dir < 0 ? value <= lim.min : value >= lim.max;
+    });
+  }
+
+  function commitField(key) {
+    var input = $(key);
+    input.value = String(Core.clampNumber(input.value, Core.LIMITS[key]));
+    savePrefs();
+    syncPace();
+  }
+
+  document.querySelectorAll('.step').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-target');
+      var lim = Core.LIMITS[key];
+      var input = $(key);
+      var next = Core.clampNumber(input.value, lim) + Number(btn.getAttribute('data-dir')) * lim.step;
+      input.value = String(Core.clampNumber(next, lim));
+      commitField(key);
+      if (btn.disabled) input.focus();
+    });
+  });
+
+  FIELDS.forEach(function (key) {
+    $(key).addEventListener('change', function () { commitField(key); });
+    $(key).addEventListener('input', function () { syncSteppers(); });
+  });
+
+  el.paced.addEventListener('change', function () { savePrefs(); syncPace(); });
+  el.sound.addEventListener('change', function () {
+    savePrefs();
+    if (el.sound.checked) {
+      ensureAudio();
+      tone(523.25, 0.35, 0);
+    }
+  });
+
+  /* ---------- Sound (Web Audio, off by default) ---------- */
+
+  var audioCtx = null;
+  function ensureAudio() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === 'suspended' && audioCtx.resume) audioCtx.resume();
+      return audioCtx;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function tone(freq, duration, delay) {
+    if (!prefs.sound || !audioCtx) return;
+    try {
+      var t = audioCtx.currentTime + (delay || 0);
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.16, t + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + duration + 0.05);
+    } catch (e) { /* sound is optional */ }
+  }
+
+  function phaseTone(phase) {
+    if (phase === P.BREATHE) tone(523.25, 0.4, 0);
+    else if (phase === P.HOLD) tone(392, 0.6, 0);
+    else if (phase === P.RECOVER) tone(440, 0.5, 0);
+    else if (phase === P.DONE) { tone(523.25, 0.4, 0); tone(659.25, 0.6, 0.3); }
+  }
+
+  /* ---------- Screen wake lock, where supported ---------- */
+
+  var wakeLock = null;
+  function requestWakeLock() {
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    try {
+      navigator.wakeLock.request('screen').then(function (lock) {
+        if (mode !== 'run') { lock.release(); return; }
+        wakeLock = lock;
+        lock.addEventListener('release', function () { if (wakeLock === lock) wakeLock = null; });
+      }).catch(function () { wakeLock = null; });
+    } catch (e) {
+      wakeLock = null;
+    }
+  }
+  function releaseWakeLock() {
+    var lock = wakeLock;
+    wakeLock = null;
+    if (lock) { try { lock.release(); } catch (e) { /* already released */ } }
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && mode === 'run') {
+      if (!wakeLock) requestWakeLock();
+      step();
+    }
+  });
+
+  /* ---------- Views ---------- */
+
+  function announce(text) {
+    el.live.textContent = '';
+    window.setTimeout(function () { el.live.textContent = text; }, 30);
+  }
+
+  function showMode(next) {
+    mode = next;
+    el.setup.hidden = next !== 'setup';
+    el.run.hidden = next !== 'run';
+    el.results.hidden = next !== 'results';
+    if (next !== 'run') el.app.setAttribute('data-phase', next === 'results' ? 'done' : 'idle');
+  }
+
+  function setText(node, text) {
+    if (node.textContent !== text) node.textContent = text;
+  }
+
+  function keepFocus(node, leaving) {
+    if (leaving && document.activeElement === node) el.primary.focus({ preventScroll: true });
+  }
+
+  function render(now) {
+    var v = timer.view(now);
+    var phaseName = '';
+    var big = '';
+    var sub = '';
+    var cue = '';
+    var primary = 'Pause';
+    var stageAction = null;
+
+    if (v.phase === P.BREATHE) {
+      phaseName = 'Breathe';
+      big = String(v.breath);
+      sub = 'of ' + v.breaths;
+      if (v.paced) {
+        cue = v.breathFraction < 0.5 ? 'Breathe in fully' : 'Let it go';
+      } else {
+        cue = 'Tap the circle for each breath';
+        primary = 'Start hold';
+        stageAction = 'count';
+      }
+    } else if (v.phase === P.HOLD) {
+      phaseName = 'Hold';
+      big = Core.formatDuration(v.holdMs);
+      sub = 'hold time';
+      cue = 'Breathe out and hold. Tap when you need to breathe in.';
+      primary = 'End hold';
+      stageAction = 'end';
+    } else if (v.phase === P.RECOVER) {
+      phaseName = 'Recovery hold';
+      big = String(Core.countdownSeconds(v.recoverRemainingMs));
+      sub = 'seconds';
+      cue = 'Breathe in fully and hold';
+    }
+
+    if (v.paused) {
+      phaseName = 'Paused';
+      cue = 'Resume when you are ready.';
+      primary = 'Resume';
+      stageAction = null;
+    }
+
+    setText(el.roundLabel, 'Round ' + v.round + ' of ' + v.rounds);
+    setText(el.phaseName, phaseName);
+    setText(el.big, big);
+    setText(el.sub, sub);
+    setText(el.cue, cue);
+    setText(el.primary, primary);
+
+    el.app.setAttribute('data-phase', v.phase);
+    el.app.setAttribute('data-paced', String(v.paced));
+
+    var showHoldNow = v.phase === P.BREATHE && v.paced && !v.paused;
+    keepFocus(el.holdNow, !showHoldNow);
+    el.holdNow.hidden = !showHoldNow;
+
+    keepFocus(el.stage, !stageAction);
+    el.stage.disabled = !stageAction;
+    el.stage.setAttribute('aria-label',
+      stageAction === 'count' ? 'Count a breath, ' + v.breath + ' of ' + v.breaths :
+      stageAction === 'end' ? 'End hold' : 'Timer display');
+
+    var scale = 1;
+    if (!reduceMotion()) {
+      if (v.phase === P.BREATHE && v.paced) {
+        scale = 0.72 + 0.28 * (0.5 - 0.5 * Math.cos(2 * Math.PI * v.breathFraction));
+      } else if (v.phase === P.BREATHE) {
+        scale = 0.86;
+      } else if (v.phase === P.HOLD) {
+        scale = 0.86;
+      }
+    }
+    el.orb.style.transform = 'scale(' + scale.toFixed(4) + ')';
+  }
+
+  function renderResults(v, saveResult) {
+    el.resultList.textContent = '';
+    v.holds.forEach(function (h) {
+      var li = document.createElement('li');
+      var r = document.createElement('span');
+      r.textContent = 'Round ' + h.round + ':';
+      var t = document.createElement('span');
+      t.className = 't';
+      t.textContent = Core.formatDuration(h.ms);
+      li.appendChild(r);
+      li.appendChild(document.createTextNode(' '));
+      li.appendChild(t);
+      el.resultList.appendChild(li);
+    });
+    var notes = [];
+    if (v.holds.length) {
+      notes.push('Longest hold: ' + Core.formatDuration(Core.summarizeHolds(v.holds).longestMs) + '.');
+    } else {
+      notes.push('No holds were recorded.');
+    }
+    if (v.stopped) notes.push('Session ended early.');
+    if (saveResult && !saveResult.saved) notes.push('This browser did not save it to your history.');
+    el.resultNote.textContent = notes.join(' ');
+  }
+
+  function formatDate(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    try {
+      return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } catch (e) {
+      return d.toISOString().slice(0, 16).replace('T', ' ');
+    }
+  }
+
+  function renderHistory(list) {
+    el.historyList.textContent = '';
+    list.slice(0, 20).forEach(function (entry) {
+      var li = document.createElement('li');
+      var when = document.createElement('span');
+      when.className = 'when';
+      when.textContent = formatDate(entry.date);
+      var holds = document.createElement('span');
+      holds.className = 'holds';
+      holds.textContent = entry.holds.map(Core.formatDuration).join(', ');
+      li.appendChild(when);
+      li.appendChild(holds);
+      el.historyList.appendChild(li);
+    });
+    el.historyEmpty.hidden = list.length > 0;
+    el.clearHistory.hidden = list.length === 0;
+    if (!storage) el.historyNote.textContent = 'This browser is blocking storage, so sessions are not saved.';
+  }
+
+  /* ---------- Session flow ---------- */
+
+  function handleEvents(events) {
+    var message = '';
+    for (var i = 0; i < events.length; i += 1) {
+      var e = events[i];
+      if (e.type === 'phase') {
+        lastPhaseAt = Math.max(lastPhaseAt, e.at);
+        phaseTone(e.phase);
+        if (e.phase === P.BREATHE) {
+          message = 'Round ' + e.round + ' of ' + timer.settings.rounds + '. Breathe.' +
+            (timer.settings.paced ? '' : ' Tap the circle for each breath.');
+        } else if (e.phase === P.HOLD) {
+          message = 'Hold. Press End hold or the space bar when you need to breathe in.';
+        } else if (e.phase === P.RECOVER) {
+          message = 'Breathe in fully and hold for ' + timer.settings.recoverySeconds + ' seconds.';
+        } else if (e.phase === P.DONE) {
+          message = 'Session complete.';
+          finishSession();
+        }
+      } else if (e.type === 'pause') {
+        message = 'Paused.';
+      } else if (e.type === 'resume') {
+        message = 'Resumed.';
+      }
+    }
+    if (message) announce(message);
+  }
+
+  function step() {
+    if (!timer || mode !== 'run') return;
+    var now = performance.now();
+    handleEvents(timer.tick(now));
+    if (mode === 'run') render(now);
+  }
+
+  function loop() {
+    step();
+    if (mode === 'run') rafId = window.requestAnimationFrame(loop);
+  }
+
+  function startLoop() {
+    stopLoop();
+    rafId = window.requestAnimationFrame(loop);
+    // rAF pauses in background tabs; this keeps phases and cues moving.
+    intervalId = window.setInterval(step, 250);
+  }
+
+  function stopLoop() {
+    window.cancelAnimationFrame(rafId);
+    window.clearInterval(intervalId);
+  }
+
+  function startSession() {
+    savePrefs();
+    if (prefs.sound) ensureAudio();
+    timer = Core.createTimer(prefs);
+    lastPhaseAt = -Infinity;
+    showMode('run');
+    var now = performance.now();
+    handleEvents(timer.start(now));
+    render(now);
+    requestWakeLock();
+    startLoop();
+    el.primary.focus({ preventScroll: true });
+    var rect = el.app.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+      el.app.scrollIntoView({ block: 'start', behavior: reduceMotion() ? 'auto' : 'smooth' });
+    }
+  }
+
+  function finishSession() {
+    stopLoop();
+    releaseWakeLock();
+    var v = timer.view(performance.now());
+    var saveResult = null;
+    if (v.holds.length) {
+      saveResult = historyStore.add(Core.makeHistoryEntry(v, new Date().toISOString()));
+    }
+    renderResults(v, saveResult);
+    renderHistory(historyStore.load());
+    showMode('results');
+    el.resultsTitle.focus({ preventScroll: true });
+  }
+
+  function primaryAction() {
+    if (mode !== 'run') { startSession(); return; }
+    var now = performance.now();
+    handleEvents(timer.tick(now));
+    if (mode !== 'run') return;
+    if (now - lastPhaseAt < GUARD_MS) return;
+    var v = timer.view(now);
+    if (v.paused) handleEvents(timer.resume(now));
+    else if (v.phase === P.HOLD) handleEvents(timer.endHold(now));
+    else if (v.phase === P.BREATHE && !v.paced) handleEvents(timer.startHold(now));
+    else handleEvents(timer.pause(now));
+    if (mode === 'run') render(now);
+  }
+
+  function pauseAction() {
+    if (mode !== 'run') return;
+    var now = performance.now();
+    handleEvents(timer.tick(now));
+    if (mode !== 'run') return;
+    handleEvents(timer.togglePause(now));
+    render(now);
+  }
+
+  el.start.addEventListener('click', startSession);
+  el.again.addEventListener('click', startSession);
+  el.primary.addEventListener('click', primaryAction);
+
+  el.edit.addEventListener('click', function () {
+    showMode('setup');
+    el.start.focus({ preventScroll: true });
+  });
+
+  el.holdNow.addEventListener('click', function () {
+    if (mode !== 'run') return;
+    var now = performance.now();
+    handleEvents(timer.startHold(now));
+    if (mode === 'run') render(now);
+  });
+
+  el.stop.addEventListener('click', function () {
+    if (mode !== 'run') return;
+    handleEvents(timer.stop(performance.now()));
+  });
+
+  el.stage.addEventListener('click', function () {
+    if (mode !== 'run') return;
+    var now = performance.now();
+    handleEvents(timer.tick(now));
+    if (mode !== 'run') return;
+    var v = timer.view(now);
+    if (v.paused) return;
+    if (v.phase === P.HOLD) {
+      if (now - lastPhaseAt < GUARD_MS) return;
+      handleEvents(timer.endHold(now));
+    } else if (v.phase === P.BREATHE && !v.paced) {
+      handleEvents(timer.countBreath(now));
+    }
+    if (mode === 'run') render(now);
+  });
+
+  // Space runs the main button. On any other focused control the browser's
+  // own activation handles it, so one key press never fires twice.
+  document.addEventListener('keydown', function (e) {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    var t = e.target;
+    var tag = t && t.tagName;
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable);
+    if (e.key === ' ' || e.code === 'Space') {
+      if (typing) return;
+      if (t && t.closest && t.closest('button, a, summary')) return;
+      e.preventDefault();
+      if (e.repeat) return;
+      primaryAction();
+    } else if ((e.key === 'p' || e.key === 'P') && !typing && !e.repeat) {
+      if (mode === 'run') { e.preventDefault(); pauseAction(); }
+    }
+  });
+
+  /* ---------- History controls ---------- */
+
+  var clearArmed = false;
+  var clearTimer = 0;
+  function disarmClear() {
+    clearArmed = false;
+    window.clearTimeout(clearTimer);
+    el.clearHistory.textContent = 'Clear history';
+  }
+  el.clearHistory.addEventListener('click', function () {
+    if (!clearArmed) {
+      clearArmed = true;
+      el.clearHistory.textContent = 'Tap again to clear';
+      clearTimer = window.setTimeout(disarmClear, 4000);
+      return;
+    }
+    disarmClear();
+    historyStore.clear();
+    renderHistory(historyStore.load());
+    announce('History cleared.');
+  });
+
+  fillForm(prefs);
+  renderHistory(historyStore.load());
+})();
+</script>
+</body>
+</html>
