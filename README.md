@@ -32,7 +32,7 @@ Also included:
 
 ## Safety
 
-Sit or lie down somewhere safe. Do not practice strong breath holds while driving, in water, standing, or anywhere fainting would be dangerous. Chest pressure, dizziness, or sharp air hunger means stop and breathe normally.
+Sit or lie down somewhere safe. Do not practice strong breath holds while driving, in or near water, standing, or anywhere fainting would be dangerous. Chest pressure, dizziness, or sharp air hunger means stop and breathe normally. If you are pregnant or have a heart condition or epilepsy, talk with your doctor before practicing breath holds.
 
 ## Run it locally
 
