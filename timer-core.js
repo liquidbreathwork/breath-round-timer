@@ -330,6 +330,32 @@
     };
   }
 
+  /* ---------- Space key on the page ---------- */
+
+  // Right after a session ends, a second quick press (often still meant for
+  // End hold) must not start a new session and throw the results away.
+  var FINISH_GUARD_MS = 800;
+
+  /*
+   * spaceKeyAction(mode, focus, msSinceFinish) decides what one Space press
+   * does. mode is 'setup', 'run' or 'results'. focus is 'typing' (a form
+   * field), 'again' (the Start again button), 'control' (any other button or
+   * link) or 'page' (anything else). msSinceFinish is the time since the
+   * last session finished.
+   * Returns 'native' (let the browser handle it, so a focused button
+   * activates itself), 'ignore' (swallow it), 'start' (start a session) or
+   * 'primary' (run the main button).
+   */
+  function spaceKeyAction(mode, focus, msSinceFinish) {
+    if (focus === 'typing') return 'native';
+    if (mode === 'results') {
+      if (!(msSinceFinish >= FINISH_GUARD_MS)) return 'ignore';
+      return focus === 'again' || focus === 'control' ? 'native' : 'ignore';
+    }
+    if (focus !== 'page') return 'native';
+    return mode === 'run' ? 'primary' : 'start';
+  }
+
   /* ---------- History (kept only in this browser) ---------- */
 
   var HISTORY_KEY = 'breath-round-timer:history:v1';
@@ -461,6 +487,8 @@
     formatDuration: formatDuration,
     countdownSeconds: countdownSeconds,
     summarizeHolds: summarizeHolds,
+    FINISH_GUARD_MS: FINISH_GUARD_MS,
+    spaceKeyAction: spaceKeyAction,
     parseHistory: parseHistory,
     makeHistoryEntry: makeHistoryEntry,
     addToHistory: addToHistory,

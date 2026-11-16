@@ -500,6 +500,8 @@
   var timer = null;
   var mode = 'setup';
   var lastPhaseAt = -Infinity;
+  var finishedAt = -Infinity;
+  var swallowSpaceUp = false;
   var rafId = 0;
   var intervalId = 0;
 
@@ -877,6 +879,7 @@
   }
 
   function finishSession() {
+    finishedAt = performance.now();
     stopLoop();
     releaseWakeLock();
     var v = timer.view(performance.now());
@@ -891,7 +894,7 @@
   }
 
   function primaryAction() {
-    if (mode !== 'run') { startSession(); return; }
+    if (mode !== 'run') return;
     var now = performance.now();
     handleEvents(timer.tick(now));
     if (mode !== 'run') return;
@@ -914,7 +917,11 @@
   }
 
   el.start.addEventListener('click', startSession);
-  el.again.addEventListener('click', startSession);
+  // A stray second press right after the session ends keeps the results up.
+  el.again.addEventListener('click', function () {
+    if (performance.now() - finishedAt < Core.FINISH_GUARD_MS) return;
+    startSession();
+  });
   el.primary.addEventListener('click', primaryAction);
 
   el.edit.addEventListener('click', function () {
@@ -950,22 +957,45 @@
     if (mode === 'run') render(now);
   });
 
-  // Space runs the main button. On any other focused control the browser's
-  // own activation handles it, so one key press never fires twice.
+  function isSpace(e) { return e.key === ' ' || e.code === 'Space'; }
+
+  function isTyping(t) {
+    var tag = t && t.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || !!(t && t.isContentEditable);
+  }
+
+  function spaceFocus(t) {
+    if (isTyping(t)) return 'typing';
+    if (t === el.again) return 'again';
+    if (t && t.closest && t.closest('button, a, summary')) return 'control';
+    return 'page';
+  }
+
+  // Space starts a session from setup and runs the main button while running.
+  // On a focused control the browser's own activation handles it, so one key
+  // press never fires twice. On the results screen only a focused Start again
+  // button starts a new session, and only once FINISH_GUARD_MS has passed.
   document.addEventListener('keydown', function (e) {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
-    var t = e.target;
-    var tag = t && t.tagName;
-    var typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable);
-    if (e.key === ' ' || e.code === 'Space') {
-      if (typing) return;
-      if (t && t.closest && t.closest('button, a, summary')) return;
+    if (isSpace(e)) {
+      swallowSpaceUp = false;
+      var action =Core.spaceKeyAction(mode, spaceFocus(e.target), performance.now() - finishedAt);
+      if (action === 'native') return;
       e.preventDefault();
+      if (action === 'ignore') { swallowSpaceUp = true; return; }
       if (e.repeat) return;
-      primaryAction();
-    } else if ((e.key === 'p' || e.key === 'P') && !typing && !e.repeat) {
+      if (action === 'start') startSession();
+      else primaryAction();
+    } else if ((e.key === 'p' || e.key === 'P') && !isTyping(e.target) && !e.repeat) {
       if (mode === 'run') { e.preventDefault(); pauseAction(); }
     }
+  });
+
+  // Buttons activate on Space key up, so a swallowed press is swallowed here too.
+  document.addEventListener('keyup', function (e) {
+    if (!isSpace(e) || !swallowSpaceUp) return;
+    swallowSpaceUp = false;
+    e.preventDefault();
   });
 
   /* ---------- History controls ---------- */

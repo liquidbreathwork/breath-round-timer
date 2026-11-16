@@ -444,3 +444,46 @@ test('results and history', async (t) => {
     assert.equal(blocked.save({ rounds: 2 }), false);
   });
 });
+
+test('space key on the page', async (t) => {
+  const act = core.spaceKeyAction;
+  const GUARD = core.FINISH_GUARD_MS;
+
+  await t.test('the guard after a session ends is 800 ms', () => {
+    assert.equal(GUARD, 800);
+  });
+
+  await t.test('setup: Space on the page starts a session, focused controls handle it themselves', () => {
+    assert.equal(act('setup', 'page', Infinity), 'start');
+    assert.equal(act('setup', 'control', Infinity), 'native');
+    assert.equal(act('setup', 'typing', Infinity), 'native');
+  });
+
+  await t.test('running: Space on the page runs the main button', () => {
+    assert.equal(act('run', 'page', Infinity), 'primary');
+    assert.equal(act('run', 'control', Infinity), 'native');
+    assert.equal(act('run', 'typing', Infinity), 'native');
+  });
+
+  await t.test('results: a quick second press after the hold ends is ignored, wherever focus is', () => {
+    for (const focus of ['page', 'again', 'control']) {
+      assert.equal(act('results', focus, 0), 'ignore', focus + ' at 0 ms');
+      assert.equal(act('results', focus, 150), 'ignore', focus + ' at 150 ms');
+      assert.equal(act('results', focus, GUARD - 1), 'ignore', focus + ' just inside the guard');
+    }
+  });
+
+  await t.test('results: after the guard only a focused Start again (or another focused control) acts', () => {
+    assert.equal(act('results', 'again', GUARD), 'native');
+    assert.equal(act('results', 'again', 60000), 'native');
+    assert.equal(act('results', 'control', GUARD), 'native');
+    // Focus on the results heading or the page never starts a new session.
+    assert.equal(act('results', 'page', GUARD), 'ignore');
+    assert.equal(act('results', 'page', 60000), 'ignore');
+  });
+
+  await t.test('results: a missing finish time counts as inside the guard', () => {
+    assert.equal(act('results', 'again', NaN), 'ignore');
+    assert.equal(act('results', 'again', undefined), 'ignore');
+  });
+});
