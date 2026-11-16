@@ -395,6 +395,7 @@
       <button type="button" class="primary" id="primary">Pause</button>
       <div class="row">
         <button type="button" class="ghost" id="holdNow">Start hold</button>
+        <button type="button" class="ghost" id="pause" hidden>Pause</button>
         <button type="button" class="ghost" id="stop">End session</button>
       </div>
       <p class="keys"><kbd>Space</kbd> pause, resume or end a hold &middot; <kbd>P</kbd> pause</p>
@@ -453,7 +454,7 @@
   function $(id) { return document.getElementById(id); }
   var el = {
     app: $('app'), setup: $('setup'), run: $('run'), results: $('results'),
-    start: $('start'), primary: $('primary'), holdNow: $('holdNow'), stop: $('stop'),
+    start: $('start'), primary: $('primary'), holdNow: $('holdNow'), pause: $('pause'), stop: $('stop'),
     stage: $('stage'), orb: $('orb'), big: $('bigNumber'), sub: $('subNumber'),
     cue: $('cue'), roundLabel: $('roundLabel'), phaseName: $('phaseName'),
     paced: $('paced'), sound: $('sound'), paceField: $('paceField'), paceHint: $('paceHint'),
@@ -663,8 +664,7 @@
     var big = '';
     var sub = '';
     var cue = '';
-    var primary = 'Pause';
-    var stageAction = null;
+    var controls = Core.runControls(v);
 
     if (v.phase === P.BREATHE) {
       phaseName = 'Breathe';
@@ -674,16 +674,12 @@
         cue = v.breathFraction < 0.5 ? 'Breathe in fully' : 'Let it go';
       } else {
         cue = 'Tap the circle for each breath';
-        primary = 'Start hold';
-        stageAction = 'count';
       }
     } else if (v.phase === P.HOLD) {
       phaseName = 'Hold';
       big = Core.formatDuration(v.holdMs);
       sub = 'hold time';
       cue = 'Breathe out and hold. Tap when you need to breathe in.';
-      primary = 'End hold';
-      stageAction = 'end';
     } else if (v.phase === P.RECOVER) {
       phaseName = 'Recovery hold';
       big = String(Core.countdownSeconds(v.recoverRemainingMs));
@@ -694,8 +690,6 @@
     if (v.paused) {
       phaseName = 'Paused';
       cue = 'Resume when you are ready.';
-      primary = 'Resume';
-      stageAction = null;
     }
 
     setText(el.roundLabel, 'Round ' + v.round + ' of ' + v.rounds);
@@ -703,20 +697,22 @@
     setText(el.big, big);
     setText(el.sub, sub);
     setText(el.cue, cue);
-    setText(el.primary, primary);
+    setText(el.primary, controls.primary);
 
     el.app.setAttribute('data-phase', v.phase);
     el.app.setAttribute('data-paced', String(v.paced));
 
-    var showHoldNow = v.phase === P.BREATHE && v.paced && !v.paused;
-    keepFocus(el.holdNow, !showHoldNow);
-    el.holdNow.hidden = !showHoldNow;
+    keepFocus(el.holdNow, !controls.holdNow);
+    el.holdNow.hidden = !controls.holdNow;
 
-    keepFocus(el.stage, !stageAction);
-    el.stage.disabled = !stageAction;
+    keepFocus(el.pause, !controls.pause);
+    el.pause.hidden = !controls.pause;
+
+    keepFocus(el.stage, !controls.stage);
+    el.stage.disabled = !controls.stage;
     el.stage.setAttribute('aria-label',
-      stageAction === 'count' ? 'Count a breath, ' + v.breath + ' of ' + v.breaths :
-      stageAction === 'end' ? 'End hold' : 'Timer display');
+      controls.stage === 'count' ? 'Count a breath, ' + v.breath + ' of ' + v.breaths :
+      controls.stage === 'end' ? 'End hold' : 'Timer display');
 
     var scale = 1;
     if (!reduceMotion()) {
@@ -912,6 +908,16 @@
     var now = performance.now();
     handleEvents(timer.startHold(now));
     if (mode === 'run') render(now);
+  });
+
+  // Shown during self-paced breathing, where the main button starts the hold.
+  el.pause.addEventListener('click', function () {
+    if (mode !== 'run') return;
+    var now = performance.now();
+    handleEvents(timer.tick(now));
+    if (mode !== 'run') return;
+    handleEvents(timer.pause(now));
+    render(now);
   });
 
   el.stop.addEventListener('click', function () {

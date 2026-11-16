@@ -184,6 +184,52 @@ test('round sequencing', async (t) => {
   });
 });
 
+test('running screen controls', async (t) => {
+  const SELF = { ...SHORT, paced: false };
+
+  await t.test('self-paced breathing shows a Pause button next to Start hold', () => {
+    const timer = core.createTimer(SELF);
+    timer.start(0);
+    assert.deepEqual(core.runControls(timer.view(100)), { primary: 'Start hold', stage: 'count', holdNow: false, pause: true });
+  });
+
+  await t.test('pausing self-paced breathing hides Pause, offers Resume and keeps the tap count', () => {
+    const timer = core.createTimer(SELF);
+    timer.start(0);
+    timer.countBreath(500);
+    timer.countBreath(900);
+    timer.pause(1000);
+    let v = timer.view(5000);
+    assert.deepEqual(core.runControls(v), { primary: 'Resume', stage: null, holdNow: false, pause: false });
+    assert.equal(v.breath, 2);
+    // Taps on the circle do nothing while paused.
+    timer.countBreath(5100);
+    assert.equal(timer.view(5100).breath, 2);
+    timer.resume(6000);
+    v = timer.view(6000);
+    assert.equal(v.breath, 2);
+    assert.equal(core.runControls(v).pause, true);
+    assert.deepEqual(phasesOf(timer.countBreath(6500)), [PHASE.HOLD]);
+  });
+
+  await t.test('self-paced hold and recovery do not show the Pause button', () => {
+    const timer = core.createTimer(SELF);
+    timer.start(0);
+    timer.startHold(100);
+    assert.deepEqual(core.runControls(timer.view(200)), { primary: 'End hold', stage: 'end', holdNow: false, pause: false });
+    timer.endHold(3000);
+    assert.deepEqual(core.runControls(timer.view(3100)), { primary: 'Pause', stage: null, holdNow: false, pause: false });
+  });
+
+  await t.test('steady pace keeps Pause on the main button and offers Start hold', () => {
+    const timer = core.createTimer(SHORT);
+    timer.start(0);
+    assert.deepEqual(core.runControls(timer.view(100)), { primary: 'Pause', stage: null, holdNow: true, pause: false });
+    timer.pause(200);
+    assert.deepEqual(core.runControls(timer.view(300)), { primary: 'Resume', stage: null, holdNow: false, pause: false });
+  });
+});
+
 test('hold stopwatch', async (t) => {
   await t.test('counts up from zero until it is ended', () => {
     const timer = core.createTimer(SHORT);

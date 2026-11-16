@@ -299,6 +299,31 @@
     };
   }
 
+  /*
+   * runControls(view) says which controls the running screen shows for a
+   * timer view: the main button's label, what a tap on the circle does
+   * ('count' a breath, 'end' the hold, or null), and whether the Start hold
+   * and Pause buttons show. With steady pace off the main button starts the
+   * hold, so a separate Pause button keeps pausing one tap away on touch.
+   */
+  function runControls(v) {
+    var c = { primary: 'Pause', stage: null, holdNow: false, pause: false };
+    if (!v) return c;
+    if (v.paused) {
+      c.primary = 'Resume';
+    } else if (v.phase === PHASE.BREATHE && v.paced) {
+      c.holdNow = true;
+    } else if (v.phase === PHASE.BREATHE) {
+      c.primary = 'Start hold';
+      c.stage = 'count';
+      c.pause = true;
+    } else if (v.phase === PHASE.HOLD) {
+      c.primary = 'End hold';
+      c.stage = 'end';
+    }
+    return c;
+  }
+
   // 72000 -> "1:12". Hours roll into minutes ("75:03").
   function formatDuration(ms) {
     var total = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
@@ -484,6 +509,7 @@
     normalizeSettings: normalizeSettings,
     clampNumber: clampNumber,
     createTimer: createTimer,
+    runControls: runControls,
     formatDuration: formatDuration,
     countdownSeconds: countdownSeconds,
     summarizeHolds: summarizeHolds,

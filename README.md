@@ -8,7 +8,7 @@ A single web page that times round-based Breathwork practice. There are no accou
 
 Each round has three parts:
 
-1. **Breathe.** A breath counter and a pulsing circle set the pace (default 30 breaths, one every 2 seconds). Turn off steady pace and you can tap the circle for each breath instead.
+1. **Breathe.** A breath counter and a pulsing circle set the pace (default 30 breaths, one every 2 seconds). Turn off steady pace and you can tap the circle for each breath instead, with a Pause button on screen.
 2. **Hold.** A big stopwatch counts up from zero until you tap End hold or press the space bar.
 3. **Recovery hold.** Breathe in fully and hold while a countdown runs (default 15 seconds).
 
